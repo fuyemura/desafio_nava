@@ -8,6 +8,9 @@ Os assets aqui consomem dados da camada Silver e produzem:
   - datasets para BI / dashboards
 """
 
-from desafio_nava.assets.gold.orders_summary import orders_summary
+from desafio_nava.assets.gold.dim_faixa_etaria import dim_faixa_etaria
+from desafio_nava.assets.gold.dim_operadora import dim_operadora
+from desafio_nava.assets.gold.dim_municipio import dim_municipio
+from desafio_nava.assets.gold.fato_beneficiario import fato_beneficiario
 
-__all__ = ["orders_summary"]
+__all__ = ["dim_faixa_etaria", "dim_operadora", "dim_municipio", "fato_beneficiario"]

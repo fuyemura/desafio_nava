@@ -15,5 +15,9 @@ SILVER_PATHS = {
 
 GOLD_PATHS = {
     "dim_ativo_financeiro": f"{BASE_DELTA_PATH}/gold/dim_ativo_financeiro",
+    "dim_operadora": f"{BASE_DELTA_PATH}/gold/dim_operadora",
+    "dim_municipio": f"{BASE_DELTA_PATH}/gold/dim_municipio",
+    "dim_faixa_etaria": f"{BASE_DELTA_PATH}/gold/dim_faixa_etaria",
     "fato_cotacao": f"{BASE_DELTA_PATH}/gold/fato_cotacao",
+    "fato_beneficiario": f"{BASE_DELTA_PATH}/gold/fato_beneficiario",
 }
