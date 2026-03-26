@@ -9,7 +9,8 @@ BRONZE_PATHS = {
 }
 
 SILVER_PATHS = {
-    "stg_cotacao_historica": f"{BASE_DELTA_PATH}/silver/stg_cotacao_historica"
+    "stg_cotacao_historica": f"{BASE_DELTA_PATH}/silver/stg_cotacao_historica",
+    "stg_pda_beneficiario": f"{BASE_DELTA_PATH}/silver/stg_pda_beneficiario",
 }
 
 GOLD_PATHS = {

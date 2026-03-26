@@ -1,17 +1,15 @@
 import glob
 
-from dagster import AssetExecutionContext, asset
+from dagster import asset
 from pyspark.sql import functions as F
 from pyspark.sql.types import (
-    DateType,
-    IntegerType,
     StringType,
     StructField,
     StructType,
 )
 
 from desafio_nava.config.paths import SOURCE_PATHS, BRONZE_PATHS
-from desafio_nava.resources.spark import SparkResource
+
 
 SOURCE_PATH_PDA_BENEFICIARIO = f"{SOURCE_PATHS['pda_beneficiario']}/pda-024-icb-*.csv"
 BRONZE_PATH = BRONZE_PATHS["raw_pda_beneficiario"]
@@ -36,10 +34,10 @@ PDA_BENEFICIARIO_SCHEMA = StructType(
         StructField("DE_ABRG_GEOGRAFICA_PLANO", StringType(), nullable=True),
         StructField("COBERTURA_ASSIST_PLAN", StringType(), nullable=True),
         StructField("TIPO_VINCULO", StringType(), nullable=True),
-        StructField("QT_BENEFICIARIO_ATIVO", IntegerType(), nullable=True),
-        StructField("QT_BENEFICIARIO_ADERIDO", IntegerType(), nullable=True),
-        StructField("QT_BENEFICIARIO_CANCELADO", IntegerType(), nullable=True),
-        StructField("DT_CARGA", DateType(), nullable=True),
+        StructField("QT_BENEFICIARIO_ATIVO", StringType(), nullable=True),
+        StructField("QT_BENEFICIARIO_ADERIDO", StringType(), nullable=True),
+        StructField("QT_BENEFICIARIO_CANCELADO", StringType(), nullable=True),
+        StructField("DT_CARGA", StringType(), nullable=True),
     ]
 )
 
@@ -59,7 +57,7 @@ PDA_BENEFICIARIO_SCHEMA = StructType(
     },
     tags={"layer": "bronze", "domain": "saude", "source": "ans_pda"},
 )
-def raw_pda_beneficiarios(context):
+def raw_pda_beneficiario(context):
     """Cria a Delta Table via Spark SQL (se não existir) e insere os dados dos CSVs encontrados."""
     spark = context.resources.spark
 
@@ -96,7 +94,7 @@ def raw_pda_beneficiarios(context):
         .option("partitionOverwriteMode", "dynamic")
         .partitionBy("SG_UF", "ID_CMPT_MOVEL")
         .option("overwriteSchema", "false")
-        .saveAsTable(BRONZE_PATH)
+        .save(f"{BRONZE_PATH}")
     )
     context.log.info(f"Dados carregados na tabela '{BRONZE_PATH}'.")
 

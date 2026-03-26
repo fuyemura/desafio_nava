@@ -8,7 +8,6 @@ Os assets aqui consomem dados da camada Bronze e aplicam:
   - enriquecimento básico
 """
 
-from desafio_nava.assets.silver.cleaned_orders import cleaned_orders
-from desafio_nava.assets.silver.cleaned_customers import cleaned_customers
+from desafio_nava.assets.silver.stg_pda_beneficiario import stg_pda_beneficiario
 
-__all__ = ["cleaned_orders", "cleaned_customers"]
+__all__ = ["stg_pda_beneficiario"]

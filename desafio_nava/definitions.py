@@ -1,22 +1,19 @@
-from dagster import Definitions, load_assets_from_package_module
+from dagster import Definitions
 
-from desafio_nava.assets import bronze, gold, silver
-from desafio_nava.jobs import all_jobs
-from desafio_nava.partitions import daily_partition, monthly_partition
-from desafio_nava.resources import get_resources_for_env
-from desafio_nava.schedules import all_schedules
-from desafio_nava.sensors import all_sensors
+# Import dos assets
+from desafio_nava.assets.bronze.ing_pda_beneficiario import raw_pda_beneficiario
+from desafio_nava.assets.silver.stg_pda_beneficiario import stg_pda_beneficiario
 
-all_assets = [
-    *load_assets_from_package_module(bronze, group_name="bronze"),
-    *load_assets_from_package_module(silver, group_name="silver"),
-    *load_assets_from_package_module(gold, group_name="gold"),
-]
+# Import do Spark resource
+from desafio_nava.resources.spark_resource import resource_spark
 
+# Definição do pipeline (Definitions)
 defs = Definitions(
-    assets=all_assets,
-    jobs=all_jobs,
-    schedules=all_schedules,
-    sensors=all_sensors,
-    resources=get_resources_for_env(),
+    assets=[
+        raw_pda_beneficiario,
+        stg_pda_beneficiario,
+        ],
+    resources={
+        "spark": resource_spark
+    }
 )
