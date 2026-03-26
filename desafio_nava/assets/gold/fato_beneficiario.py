@@ -84,9 +84,9 @@ def fato_beneficiario(context):
         .select(
             F.col("SG_UF"),
             F.col("ID_CMPT_MOVEL"),
-            F.col("SK_OPERADORA"),
-            F.col("SK_MUNICIPIO"),
-            F.col("SK_FAIXA_ETARIA"),
+            F.coalesce(F.col("SK_OPERADORA"),  F.lit(-1).cast("long")).alias("SK_OPERADORA"),
+            F.coalesce(F.col("SK_MUNICIPIO"),  F.lit(-1).cast("long")).alias("SK_MUNICIPIO"),
+            F.coalesce(F.col("SK_FAIXA_ETARIA"), F.lit(-1).cast("long")).alias("SK_FAIXA_ETARIA"),
             F.col("QT_BENEFICIARIO_ATIVO"),
             F.col("QT_BENEFICIARIO_ADERIDO"),
             F.col("QT_BENEFICIARIO_CANCELADO"),

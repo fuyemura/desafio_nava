@@ -95,7 +95,7 @@ def dim_faixa_etaria(context):
     return MaterializeResult(
         metadata={
             "processamento": MetadataValue.json({
-                "registros_incoming": total_faixa_etaria,
+                "registros_total": total_faixa_etaria,
                 "registros_inseridos": inserted,
                 "registros_atualizados": updated,
                 "destino": GOLD_PATH,
