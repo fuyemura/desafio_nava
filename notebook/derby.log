@@ -1,0 +1,13 @@
+----------------------------------------------------------------
+Thu Mar 26 14:16:58 BRT 2026:
+Booting Derby version The Apache Software Foundation - Apache Derby - 10.14.2.0 - (1828579): instance a816c00e-019d-2b26-39d4-0000014323e0 
+on database directory D:\Projetos\desafio_nava\delta_lake\metastore_db with class loader jdk.internal.loader.ClassLoaders$AppClassLoader@c387f44 
+Loaded from file:/D:/spark/jars/derby-10.14.2.0.jar
+java.vendor=Eclipse Adoptium
+java.runtime.version=17.0.16+8
+user.dir=d:\Projetos\desafio_nava\notebook
+os.name=Windows 11
+os.arch=amd64
+os.version=10.0
+derby.system.home=null
+Database Class Loader started - derby.database.classpath=''

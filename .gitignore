@@ -1,0 +1,68 @@
+# ─── Python ────────────────────────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+*.egg
+*.egg-info/
+dist/
+build/
+wheels/
+*.whl
+.eggs/
+
+# ─── Ambientes virtuais ─────────────────────────────────────────────────────────
+.venv/
+venv/
+env/
+ENV/
+.env.local
+.env.*.local
+
+# ─── Variáveis de ambiente ──────────────────────────────────────────────────────
+.env
+!.env.example
+
+# ─── Dagster ───────────────────────────────────────────────────────────────────
+$DAGSTER_HOME/
+dagster_home/storage/
+dagster_home/logs/
+dagster_home/artifacts/
+*.dagster
+
+# ─── Jupyter / Notebooks ───────────────────────────────────────────────────────
+.ipynb_checkpoints/
+*.ipynb_checkpoints
+
+# ─── Dados locais / artefatos ──────────────────────────────────────────────────
+delta_lake/
+data/
+*.parquet
+*.csv
+*.json
+!**/fixtures/*.json
+
+# ─── IDEs ──────────────────────────────────────────────────────────────────────
+.vscode/settings.json
+.idea/
+*.swp
+*.swo
+.DS_Store
+
+# ─── Testes e cobertura ────────────────────────────────────────────────────────
+.pytest_cache/
+.coverage
+htmlcov/
+coverage.xml
+*.coveragerc
+
+# ─── Mypy ──────────────────────────────────────────────────────────────────────
+.mypy_cache/
+.dmypy.json
+
+# ─── Ruff ──────────────────────────────────────────────────────────────────────
+.ruff_cache/
+
+# ─── Docker ────────────────────────────────────────────────────────────────────
+docker/volumes/
