@@ -15,7 +15,7 @@ GROUP BY
     NM_RAZAO_SOCIAL,
     MODALIDADE_OPERADORA
 ORDER BY TOTAL_BENEFICIARIOS_ATIVOS DESC
-LIMIT 5;
+FETCH FIRST 5 ROWS ONLY;
 
 -- ------------------------------------------------------------
 
@@ -27,7 +27,7 @@ FROM gold.fato_beneficiario
 GROUP BY
     DE_FAIXA_ETARIA
 ORDER BY TOTAL_BENEFICIARIOS_ATIVOS DESC
-LIMIT 1;
+FETCH FIRST 1 ROWS ONLY;
 
 -- ------------------------------------------------------------
 

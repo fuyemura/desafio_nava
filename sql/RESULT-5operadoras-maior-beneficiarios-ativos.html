@@ -1,0 +1,13 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8"/><style>
+table {border: medium solid #6495ed;border-collapse: collapse;width: 100%;} th{font-family: monospace;border: thin solid #6495ed;padding: 5px;background-color: #D0E3FA;}th{text-align: left;}td{font-family: sans-serif;border: thin solid #6495ed;padding: 5px;text-align: center;}.odd{background:#e8edff;}img{padding:5px; border:solid; border-color: #dddddd #aaaaaa #aaaaaa #dddddd; border-width: 1px 2px 2px 1px; background-color:white;}</style>
+</head>
+<body>
+<table><tr><th colspan="4"><pre><code>SELECT<br>    CD_OPERADORA,<br>    NM_RAZAO_SOCIAL,<br>    MODALIDADE_OPERADORA,<br>    SUM(QT_BENEFICIARIO_ATIVO) AS TOTAL_BENEFICIARIOS_ATIVOS<br>FROM gold.fato_beneficiario<br>GROUP BY<br>    CD_OPERADORA,<br>    NM_RAZAO_SOCIAL,<br>    MODALIDADE_OPERADORA<br>ORDER BY TOTAL_BENEFICIARIOS_ATIVOS DESC<br>FETCH FIRST 5 ROWS ONLY</code></pre></th></tr><tr><th>CD_OPERADORA</th><th>NM_RAZAO_SOCIAL</th><th>MODALIDADE_OPERADORA</th><th>TOTAL_BENEFICIARIOS_ATIVOS</th></tr><tr class="odd"><td>301949</td><td>ODONTOPREV S/A</td><td>ODONTOLOGIA DE GRUPO</td><td>8,386,339</td></tr>
+<tr><td>368253</td><td>HAPVIDA ASSISTENCIA MEDICA S.A.</td><td>MEDICINA DE GRUPO</td><td>8,206,708</td></tr>
+<tr class="odd"><td>359017</td><td>NOTRE DAME INTERMÉDICA SAÚDE S.A.</td><td>MEDICINA DE GRUPO</td><td>5,853,216</td></tr>
+<tr><td>326305</td><td>AMIL ASSISTÊNCIA MÉDICA INTERNACIONAL S.A.</td><td>MEDICINA DE GRUPO</td><td>5,462,212</td></tr>
+<tr class="odd"><td>006246</td><td>SUL AMERICA COMPANHIA DE SEGURO SAÚDE</td><td>SEGURADORA ESPECIALIZADA EM SAÚDE</td><td>4,384,633</td></tr>
+</table></body></html>

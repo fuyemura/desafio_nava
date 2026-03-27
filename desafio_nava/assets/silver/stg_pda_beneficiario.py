@@ -95,8 +95,7 @@ def stg_pda_beneficiario(context):
         F.current_timestamp().alias("CRIADO_EM"),
     )
 
-    total_silver = df_silver.count()
-    context.log.info(f"Gravando {total_silver} registros em {SILVER_PATH}")
+    context.log.info(f"Gravando registros em {SILVER_PATH}")
 
     # Gravação na Silver, sobrescrevendo partições dinamicamente (idempotência)
     (
@@ -115,7 +114,6 @@ def stg_pda_beneficiario(context):
         metadata={
             "processamento": MetadataValue.json({
                 "registros_lidos": total_bronze,
-                "registros_gravados": total_silver,
                 "destino": SILVER_PATH,
                 "status": "sucesso",
             })

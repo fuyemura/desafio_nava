@@ -10,4 +10,7 @@ def resource_spark(_):
     try:
         yield spark
     finally:
-        spark.stop()
+        try:
+            spark.stop()
+        except Exception:
+            pass
