@@ -2,7 +2,7 @@
 
 Pipeline de engenharia de dados utilizando [Dagster](https://dagster.io/) como orquestrador, [Apache Spark](https://spark.apache.org/) + [Delta Lake](https://delta.io/) como camada de armazenamento e processamento, com arquitetura **Medallion (Bronze → Silver → Gold)**.
 
-A fonte de dados é o arquivo PDA (Plano de Dados Abertos) da ANS — beneficiários de planos de saúde.
+A fonte de dados é o arquivo PDA (Plano de Dados Abertos) da ANS — beneficiários de planos de saúde (competência **202508** — agosto/2025).
 
 ---
 
@@ -12,10 +12,11 @@ A fonte de dados é o arquivo PDA (Plano de Dados Abertos) da ANS — beneficiá
 - [Estrutura do Projeto](#estrutura-do-projeto)
 - [Pré-requisitos](#pré-requisitos)
 - [Instalação](#instalação)
+- [Download dos Dados Fonte](#download-dos-dados-fonte)
 - [Executando o Dagster](#executando-o-dagster)
 - [Grafo de Assets](#grafo-de-assets)
 - [Camadas de Dados](#camadas-de-dados)
-- [Consultas Analíticas](#consultas-analíticas)
+- [Consultas Analíticas com DuckDB](#consultas-analíticas-com-duckdb)
 
 ---
 
@@ -64,24 +65,29 @@ desafio_nava/
 │   │       ├── dim_faixa_etaria.py       # Dimensão Faixa Etária (SCD Tipo 1)
 │   │       └── fato_beneficiario.py      # Tabela Fato — métricas de beneficiários
 │   ├── config/
-│   │   ├── paths.py                      # Caminhos das camadas Delta
-│   │   └── partitions.py
+│   │   └── paths.py                      # Caminhos das camadas Delta
 │   ├── resources/
 │   │   └── spark_resource.py             # Recurso Dagster — SparkSession
 │   ├── utils/
 │   │   └── spark_config.py               # Inicialização do Spark + Delta Lake
 │   └── definitions.py                    # Registro de assets e resources
 ├── data/
-│   ├── raw/                              # CSVs fonte (ANS/PDA)
+│   ├── raw/                              # CSVs fonte (ANS/PDA) — 28 arquivos por UF
 │   ├── bronze/                           # Delta Tables Bronze
 │   ├── silver/                           # Delta Tables Silver
 │   └── gold/                             # Delta Tables Gold
 ├── delta_lake/                           # Metastore Hive local + Spark Warehouse
+├── documentacao/
+│   └── Case - Engenheiro de dados.pdf    # Enunciado do desafio
 ├── notebook/
-│   └── create-delta-tables.ipynb         # Criação manual das tabelas Delta
+│   ├── create-delta-tables.ipynb         # Criação manual das tabelas Delta
+│   └── download_ans_202508.py            # Script de download dos CSVs da ANS
 ├── sql/
 │   ├── duckdb_create_schema.sql          # Views DuckDB sobre Delta Tables
-│   └── analises_beneficiarios.sql        # Consultas analíticas
+│   ├── analises_beneficiarios.sql        # Consultas analíticas
+│   ├── RESULT-5operadoras-maior-beneficiarios-ativos.html
+│   ├── RESULT-faixa-etaria-mais-beneficiarios.html
+│   └── RESULT-liste-quantidade-beneficiarios-municipio.html
 ├── pyproject.toml
 └── README.md
 ```
@@ -178,6 +184,21 @@ Execute o notebook `notebook/create-delta-tables.ipynb` para criar os schemas e 
 
 ---
 
+## Download dos Dados Fonte
+
+Os CSVs da ANS podem ser baixados diretamente com o script incluso:
+
+```powershell
+# Na raiz do projeto, com o ambiente ativado
+python notebook/download_ans_202508.py
+```
+
+O script baixa os 28 arquivos da competência **202508** (um por UF + XX) do portal de dados abertos da ANS e os salva em `ans_beneficiarios_202508/`. Após o download, extraia os `.zip` e mova os `.csv` para `data/raw/`.
+
+Fonte: `https://dadosabertos.ans.gov.br/FTP/PDA/informacoes_consolidadas_de_beneficiarios-024/202508/`
+
+---
+
 ## Executando o Dagster
 
 ```powershell
@@ -240,48 +261,94 @@ A configuração `[tool.dagster]` em `pyproject.toml` aponta automaticamente par
 
 ### Bronze — `raw_pda_beneficiario`
 
-- Todos os campos armazenados como `STRING` para preservar dados originais
+- Lê todos os CSVs do padrão `data/raw/pda-024-icb-*.csv` com schema explícito (22 campos)
+- Todos os campos armazenados como `STRING` para preservar os dados originais
 - Particionada por `SG_UF` e `ID_CMPT_MOVEL`
 - Adiciona coluna `CRIADO_EM` (timestamp de ingestão)
+- Delimitador `;`, encoding `UTF-8`
 
 ### Silver — `stg_pda_beneficiario`
 
-- Cast de colunas numéricas para `INT` e `DT_CARGA` para `DATE`
+- Cast de colunas numéricas para `INT` (`QT_BENEFICIARIO_ATIVO`, `QT_BENEFICIARIO_ADERIDO`, `QT_BENEFICIARIO_CANCELADO`)
+- Cast de `DT_CARGA` para `DATE`
 - Trim em todos os campos string
-- Mesma partição da Bronze
+- Mesma partição da Bronze (`SG_UF + ID_CMPT_MOVEL`)
 
 ### Gold — Dimensões (SCD Tipo 1)
 
-| Tabela | Grain | SK |
+| Tabela | Grain | SK gerada por |
 |---|---|---|
 | `dim_operadora` | `CD_OPERADORA` | `xxhash64(CD_OPERADORA)` |
 | `dim_municipio` | `CD_MUNICIPIO` | `xxhash64(CD_MUNICIPIO)` |
 | `dim_faixa_etaria` | `DE_FAIXA_ETARIA` | `xxhash64(DE_FAIXA_ETARIA)` |
 
+Atualizações via MERGE (upsert): insere novos registros e atualiza atributos existentes.
+
 ### Gold — Fato
 
-- `fato_beneficiario`: métricas de beneficiários ativos, aderidos e cancelados por operadora, município e faixa etária
-- FKs com fallback para `-1` quando não há correspondência na dimensão
+`fato_beneficiario`: resolve surrogate keys fazendo join com as três dimensões e agrega:
+
+| Coluna | Tipo | Descrição |
+|---|---|---|
+| `SG_UF` | STRING | Sigla do estado |
+| `ID_CMPT_MOVEL` | STRING | Competência móvel (YYYYMM) |
+| `SK_OPERADORA` | LONG | FK para `dim_operadora` (−1 se não encontrado) |
+| `SK_MUNICIPIO` | LONG | FK para `dim_municipio` (−1 se não encontrado) |
+| `SK_FAIXA_ETARIA` | LONG | FK para `dim_faixa_etaria` (−1 se não encontrado) |
+| `QT_BENEFICIARIO_ATIVO` | INT | Quantidade de beneficiários ativos |
+| `QT_BENEFICIARIO_ADERIDO` | INT | Quantidade de beneficiários aderidos |
+| `QT_BENEFICIARIO_CANCELADO` | INT | Quantidade de beneficiários cancelados |
+| `CRIADO_EM` | TIMESTAMP | Timestamp de carga |
 
 ---
 
-## Consultas Analíticas
+## Consultas Analíticas com DuckDB
 
-As consultas em `sql/analises_beneficiarios.sql` utilizam **DuckDB** com as views definidas em `sql/duckdb_create_schema.sql`, que mapeiam as Delta Tables via `delta_scan()`.
+As análises utilizam **DuckDB** com a extensão `delta`, que lê as Delta Tables diretamente via `delta_scan()` — sem necessidade de Spark.
+
+### Configuração do schema
 
 ```sql
--- Carregar schemas e views
+-- Execute no DuckDB CLI ou em qualquer cliente compatível
 LOAD delta;
--- (executar duckdb_create_schema.sql)
-
--- Top 5 operadoras com mais beneficiários ativos
-SELECT NM_RAZAO_SOCIAL, SUM(QT_BENEFICIARIO_ATIVO)
-FROM gold.fato_beneficiario
-GROUP BY NM_RAZAO_SOCIAL
-ORDER BY 2 DESC LIMIT 5;
+-- Cole o conteúdo de sql/duckdb_create_schema.sql
+-- Isso cria views nos schemas bronze, silver e gold.
 ```
 
-Consultas disponíveis:
-- **a)** Top 5 operadoras por beneficiários ativos
-- **b)** Faixa etária com maior número de beneficiários
-- **c)** Ranking de municípios por quantidade de beneficiários
+### Perguntas respondidas
+
+**a) Top 5 operadoras com mais beneficiários ativos**
+
+```sql
+SELECT CD_OPERADORA, NM_RAZAO_SOCIAL, MODALIDADE_OPERADORA,
+       SUM(QT_BENEFICIARIO_ATIVO) AS TOTAL_BENEFICIARIOS_ATIVOS
+FROM gold.fato_beneficiario
+GROUP BY CD_OPERADORA, NM_RAZAO_SOCIAL, MODALIDADE_OPERADORA
+ORDER BY TOTAL_BENEFICIARIOS_ATIVOS DESC
+FETCH FIRST 5 ROWS ONLY;
+```
+
+**b) Faixa etária com maior número de beneficiários**
+
+```sql
+SELECT DE_FAIXA_ETARIA, SUM(QT_BENEFICIARIO_ATIVO) AS TOTAL_BENEFICIARIOS_ATIVOS
+FROM gold.fato_beneficiario
+GROUP BY DE_FAIXA_ETARIA
+ORDER BY TOTAL_BENEFICIARIOS_ATIVOS DESC
+FETCH FIRST 1 ROWS ONLY;
+```
+
+**c) Ranking de municípios por quantidade de beneficiários (decrescente)**
+
+```sql
+SELECT CD_MUNICIPIO, NM_MUNICIPIO, SG_UF,
+       SUM(QT_BENEFICIARIO_ATIVO) AS TOTAL_BENEFICIARIOS_ATIVOS
+FROM gold.fato_beneficiario
+GROUP BY CD_MUNICIPIO, NM_MUNICIPIO, SG_UF
+ORDER BY TOTAL_BENEFICIARIOS_ATIVOS DESC;
+```
+
+Os resultados pré-computados estão disponíveis em `sql/`:
+- `RESULT-5operadoras-maior-beneficiarios-ativos.html`
+- `RESULT-faixa-etaria-mais-beneficiarios.html`
+- `RESULT-liste-quantidade-beneficiarios-municipio.html`
